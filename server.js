@@ -19,7 +19,7 @@ const TWILIO_ACCOUNT_SID   = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN    = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_FROM          = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886';
 const OWNER_WHATSAPP       = process.env.OWNER_WHATSAPP;    // e.g. whatsapp:+16135551234
-const DATA_FILE            = path.join(__dirname, 'data.json');
+const DATA_FILE = path.join('/app/data', 'data.json');
 
 // Twilio client — only created if credentials are provided
 const twilioClient = (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN)
