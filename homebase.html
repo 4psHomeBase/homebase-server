@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HomeBase – Family Home Manager</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --sw:240px;--bg:#f0f4f8;--sur:#fff;
+  --sbar:#1e293b;--smut:#94a3b8;
+  --txt:#1e293b;--muted:#64748b;--bdr:#e2e8f0;
+  --pri:#3b82f6;--ok:#22c55e;--warn:#f59e0b;--err:#ef4444;
+  --shad:0 1px 3px rgba(0,0,0,.1);--shad2:0 4px 12px rgba(0,0,0,.12);
+  --rad:8px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);display:flex;height:100vh;overflow:hidden}
+
+/* ══ AUTH ══ */
+#auth-wrap{position:fixed;inset:0;background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);display:flex;align-items:center;justify-content:center;z-index:9999}
+#auth-wrap.hidden{display:none}
+.auth-card{background:#fff;border-radius:16px;padding:40px;width:90%;max-width:400px;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+.auth-logo{text-align:center;margin-bottom:28px}
+.auth-logo .ico{font-size:52px;display:block;margin-bottom:10px}
+.auth-logo h1{font-size:24px;font-weight:700;color:var(--txt)}
+.auth-logo p{font-size:13px;color:var(--muted);margin-top:4px}
+.auth-card .fg{margin-bottom:14px}
+.auth-card .fg label{display:block;font-size:12.5px;font-weight:600;color:var(--txt);margin-bottom:5px}
+.auth-card .fc{width:100%;padding:10px 13px;border:1.5px solid var(--bdr);border-radius:var(--rad);font-size:14px;transition:border-color .15s}
+.auth-card .fc:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+.auth-btn{width:100%;padding:11px;background:var(--pri);color:#fff;border:none;border-radius:var(--rad);font-size:14px;font-weight:600;cursor:pointer;margin-top:6px;transition:background .15s}
+.auth-btn:hover{background:#2563eb}
+.auth-err{background:#fee2e2;color:#dc2626;padding:9px 12px;border-radius:var(--rad);font-size:12.5px;margin-bottom:12px;display:none}
+.auth-err.show{display:block}
+.auth-note{background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--rad);padding:10px 13px;font-size:12px;color:#1d4ed8;margin-bottom:16px}
+.remember-row{display:flex;align-items:center;gap:7px;margin-bottom:14px}
+.remember-row label{font-size:12.5px;color:var(--muted);cursor:pointer}
+
+/* ══ LAYOUT ══ */
+#app-wrap{display:flex;height:100vh;width:100%;overflow:hidden}
+#sidebar{width:var(--sw);background:var(--sbar);display:flex;flex-direction:column;flex-shrink:0}
+#shead{padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+#shead h1{color:#fff;font-size:19px;font-weight:700;display:flex;align-items:center;gap:8px}
+#shead p{color:var(--smut);font-size:11px;margin-top:3px}
+#snav{flex:1;padding:10px 0;overflow-y:auto}
+.nlbl{padding:14px 20px 4px;color:var(--smut);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.ni{display:flex;align-items:center;gap:10px;padding:9px 20px;color:var(--smut);cursor:pointer;font-size:13.5px;font-weight:500;border-left:3px solid transparent;transition:all .12s}
+.ni:hover{color:#fff;background:rgba(255,255,255,.05)}
+.ni.active{color:#fff;background:rgba(59,130,246,.18);border-left-color:var(--pri)}
+.ni .ico{font-size:17px;width:20px;text-align:center}
+.nbadge{margin-left:auto;background:var(--err);color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:700}
+#hfilt{padding:12px 14px;border-top:1px solid rgba(255,255,255,.08)}
+#hfilt label{color:var(--smut);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px}
+#hfilt select{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;padding:7px 10px;border-radius:var(--rad);font-size:12px;cursor:pointer}
+#hfilt select option{background:var(--sbar)}
+
+/* ══ TOPBAR ══ */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#topbar{background:var(--sur);border-bottom:1px solid var(--bdr);padding:0 20px;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#topbar h2{font-size:17px;font-weight:600}
+.tright{display:flex;align-items:center;gap:10px}
+.tacts{display:flex;gap:8px}
+.user-chip{display:flex;align-items:center;gap:7px;padding:5px 10px 5px 6px;background:var(--bg);border-radius:20px;cursor:pointer;font-size:12.5px;font-weight:500;border:1px solid var(--bdr)}
+.user-chip:hover{background:#e2e8f0}
+.uavatar{width:26px;height:26px;border-radius:50%;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.role-tag{font-size:10px;color:var(--muted)}
+#content{flex:1;overflow-y:auto;padding:22px}
+
+/* ══ CARDS / STATS ══ */
+.card{background:var(--sur);border-radius:var(--rad);box-shadow:var(--shad);padding:18px;margin-bottom:16px}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.ct{font-size:15px;font-weight:600}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:20px}
+.sc{background:var(--sur);border-radius:var(--rad);padding:18px;box-shadow:var(--shad);border-left:4px solid var(--pri)}
+.sc.warn{border-left-color:var(--warn)}.sc.err{border-left-color:var(--err)}.sc.ok{border-left-color:var(--ok)}
+.sv{font-size:30px;font-weight:700}.sl{font-size:12px;color:var(--muted);margin-top:3px}
+
+/* ══ BUTTONS ══ */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--rad);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .12s}
+.bp{background:var(--pri);color:#fff}.bp:hover{background:#2563eb}
+.bs{background:var(--bg);color:var(--txt);border:1px solid var(--bdr)}.bs:hover{background:#e2e8f0}
+.bd{background:var(--err);color:#fff}
+.bsm{padding:4px 10px;font-size:11px}
+.bico{padding:5px;background:transparent;border:none;cursor:pointer;color:var(--muted);border-radius:5px;font-size:15px}
+.bico:hover{background:var(--bg);color:var(--txt)}
+.pay-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:var(--rad);font-size:11px;font-weight:600;cursor:pointer;border:none;background:#ecfdf5;color:#059669;text-decoration:none}
+.pay-btn:hover{background:#d1fae5}
+
+/* ══ LISTS ══ */
+.ilist{border:1px solid var(--bdr);border-radius:var(--rad);overflow:hidden}
+.irow{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--bdr);background:var(--sur);gap:10px;flex-wrap:wrap}
+.irow:last-child{border-bottom:none}.irow:hover{background:#f8fafc}
+.irow.paid-row{background:#f0fdf4}
+.iinfo{flex:1;min-width:0}
+.ititle{font-weight:500;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.isub{font-size:11.5px;color:var(--muted);margin-top:2px}
+.imeta{text-align:right;flex-shrink:0}
+.iamt{font-weight:600;font-size:14px}.idate{font-size:11px;color:var(--muted)}
+
+/* ══ BADGES ══ */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:600}
+.berr{background:#fee2e2;color:#dc2626}.bwarn{background:#fef3c7;color:#d97706}
+.bok{background:#dcfce7;color:#16a34a}.binfo{background:#dbeafe;color:#1d4ed8}.bmut{background:#f1f5f9;color:#64748b}
+.bpaid{background:#d1fae5;color:#059669}
+
+/* ══ MISC ══ */
+.hdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--bdr);border:1px solid var(--bdr);border-radius:var(--rad);overflow:hidden}
+.cdh{background:var(--bg);padding:7px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase}
+.cd{background:var(--sur);padding:6px;min-height:78px}
+.cd.om{background:#fafafa}.cd.tdy{background:#eff6ff}
+.cdn{font-size:12px;font-weight:500;margin-bottom:3px}
+.cd.tdy .cdn{background:var(--pri);color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px}
+.cev{font-size:10.5px;padding:2px 4px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ══ FORMS ══ */
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:12.5px;font-weight:500;margin-bottom:5px}
+.fc{width:100%;padding:7px 11px;border:1px solid var(--bdr);border-radius:var(--rad);font-size:13px;background:var(--sur);color:var(--txt)}
+.fc:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.fsel{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:26px}
+textarea.fc{resize:vertical;min-height:72px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* ══ MODAL ══ */
+#moverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:1000}
+#moverlay.open{display:flex}
+#modal{background:var(--sur);border-radius:12px;padding:24px;width:90%;max-width:540px;max-height:88vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.22)}
+#mtitle{font-size:17px;font-weight:600;margin-bottom:18px}
+#macts{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--bdr)}
+
+/* ══ HOME CARDS ══ */
+.hcard{background:var(--sur);border-radius:var(--rad);box-shadow:var(--shad);overflow:hidden;transition:box-shadow .15s}
+.hcard:hover{box-shadow:var(--shad2)}
+.hcbar{height:7px}.hcbody{padding:15px}
+.hcphoto{width:100%;height:140px;object-fit:cover;display:block}
+.hcphoto-placeholder{width:100%;height:90px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--muted);gap:5px;border-bottom:1px solid var(--bdr);background:var(--bg);transition:background .15s}
+.hcphoto-placeholder:hover{background:#e2e8f0}
+.hcname{font-size:15px;font-weight:600}.hcaddr{font-size:12px;color:var(--muted);margin-top:2px}
+.hcstats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:11px}
+.hstat{text-align:center;padding:8px 4px;background:var(--bg);border-radius:6px}
+.hstatv{font-size:17px;font-weight:700}.hstatl{font-size:10px;color:var(--muted);margin-top:1px}
+
+/* ══ ALERT ITEMS ══ */
+.aitem{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--sur);border-radius:var(--rad);border:1px solid var(--bdr);margin-bottom:7px}
+.aitem.err{border-left:3px solid var(--err)}.aitem.warn{border-left:3px solid var(--warn)}
+.aico{font-size:18px}.ainfo{flex:1}
+.atitle{font-size:13px;font-weight:500}.adesc{font-size:11px;color:var(--muted);margin-top:1px}
+
+/* ══ EMPTY / SYSTEMS / MAINT ══ */
+.empty{text-align:center;padding:44px 24px;color:var(--muted)}
+.empty .eico{font-size:44px;margin-bottom:10px}
+.empty h3{font-size:17px;font-weight:600;color:var(--txt);margin-bottom:7px}
+.empty p{font-size:13px;margin-bottom:16px}
+.sysg{margin-bottom:18px}
+.sysch{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.sysc{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rad);padding:13px;margin-bottom:7px}
+.syschdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:7px}
+.syscname{font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:7px}
+.syscsub{font-size:11px;color:var(--muted);margin-top:2px}
+.sysdets{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px}
+.sysdet .sdl{color:var(--muted);font-size:10.5px;margin-bottom:1px}
+.sysdet .sdv{font-weight:500;font-size:12px}
+.mico{font-size:18px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:7px;flex-shrink:0}
+.colopts{display:flex;gap:7px;flex-wrap:wrap}
+.colopt{width:26px;height:26px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:border-color .12s}
+.colopt.sel{border-color:var(--txt)}
+
+/* ══ COPY-TO CHECKBOXES ══ */
+.copy-home-opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--bdr);border-radius:var(--rad);margin-bottom:7px;cursor:pointer;background:var(--sur);transition:background .12s}
+.copy-home-opt:hover{background:#f8fafc}
+.copy-home-opt input{cursor:pointer;width:16px;height:16px;accent-color:var(--pri)}
+.copy-home-opt label{cursor:pointer;font-size:13px;font-weight:500;flex:1}
+.copy-home-opt .hcd{font-size:11px;color:var(--muted)}
+
+/* ══ SETTINGS ══ */
+.set-section{margin-bottom:24px}
+.set-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--bdr)}
+.user-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--bdr);background:var(--sur)}
+.user-row:last-child{border-bottom:none}
+.user-avatar-lg{width:36px;height:36px;border-radius:50%;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}
+.you-tag{font-size:10px;background:#dbeafe;color:#1d4ed8;padding:1px 6px;border-radius:10px;font-weight:600}
+.admin-tag{font-size:10px;background:#fef3c7;color:#d97706;padding:1px 6px;border-radius:10px;font-weight:600}
+
+/* ══ EMAIL DRAFT ══ */
+.email-box{background:#f8fafc;border:1px solid var(--bdr);border-radius:var(--rad);padding:14px;font-size:13px;line-height:1.6;white-space:pre-wrap;font-family:inherit;margin-bottom:12px}
+.email-actions{display:flex;gap:8px;flex-wrap:wrap}
+.copy-btn{background:#1e293b;color:#fff;border:none;padding:7px 14px;border-radius:var(--rad);font-size:12px;cursor:pointer;font-weight:600}
+.copy-btn:hover{background:#334155}
+.copy-btn.copied{background:var(--ok)}
+.mailto-btn{background:var(--pri);color:#fff;text-decoration:none;padding:7px 14px;border-radius:var(--rad);font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px}
+.mailto-btn:hover{background:#2563eb}
+
+/* ══ GERONIMO CHAT ══ */
+#geri-fab{position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,#1e293b,#3b4a63);color:#fff;padding:11px 18px;border-radius:28px;cursor:pointer;z-index:800;box-shadow:0 4px 20px rgba(0,0,0,.3);font-size:13px;font-weight:600;display:none;align-items:center;gap:8px;border:none;transition:transform .15s}
+#geri-fab:hover{transform:translateY(-2px)}
+#geri-fab.visible{display:flex}
+#geri-panel{position:fixed;bottom:76px;right:24px;width:340px;height:460px;background:#fff;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.22);z-index:800;display:none;flex-direction:column;overflow:hidden;border:1px solid var(--bdr)}
+#geri-panel.open{display:flex}
+#geri-hdr{background:linear-gradient(135deg,#1e293b,#3b4a63);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#geri-hdr .gtitle{font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px}
+#geri-hdr .gsub{font-size:10px;opacity:.7;margin-top:2px}
+#geri-close{background:rgba(255,255,255,.15);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+#geri-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.gmsg{max-width:88%;padding:9px 12px;border-radius:10px;font-size:12.5px;line-height:1.5}
+.gmsg.geri{background:#f1f5f9;color:var(--txt);border-bottom-left-radius:3px;align-self:flex-start}
+.gmsg.user{background:var(--pri);color:#fff;border-bottom-right-radius:3px;align-self:flex-end}
+.geri-prompts{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 8px}
+.gprompt{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:14px;padding:5px 11px;font-size:11px;cursor:pointer;font-weight:500}
+.gprompt:hover{background:#dbeafe}
+#geri-inp-row{padding:10px;border-top:1px solid var(--bdr);display:flex;gap:6px;flex-shrink:0}
+#geri-inp{flex:1;padding:8px 11px;border:1px solid var(--bdr);border-radius:var(--rad);font-size:12.5px}
+#geri-inp:focus{outline:none;border-color:var(--pri)}
+#geri-send{background:var(--pri);color:#fff;border:none;padding:8px 14px;border-radius:var(--rad);cursor:pointer;font-size:12px;font-weight:600}
+#geri-send:hover{background:#2563eb}
+.geri-draft-btn{display:inline-flex;align-items:center;gap:4px;margin-top:6px;background:#1e293b;color:#fff;border:none;padding:5px 11px;border-radius:var(--rad);font-size:11px;cursor:pointer;font-weight:600}
+.geri-draft-btn:hover{background:#334155}
+.typing-dot{display:inline-block;width:6px;height:6px;background:var(--muted);border-radius:50%;animation:tdot 1.2s infinite}
+.typing-dot:nth-child(2){animation-delay:.2s}.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+/* ══ TOAST ══ */
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(60px);background:#1e293b;color:#fff;padding:11px 18px;border-radius:var(--rad);font-size:13px;box-shadow:var(--shad2);z-index:2000;opacity:0;transition:all .25s;white-space:nowrap}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ══ WELCOME ══ */
+#welcome{display:flex;align-items:center;justify-content:center;min-height:60vh}
+.wcard{background:#fff;border-radius:16px;padding:44px;text-align:center;max-width:400px;box-shadow:var(--shad2)}
+.wcard h2{font-size:22px;margin-bottom:10px}
+.wcard p{color:var(--muted);margin-bottom:22px;font-size:14px}
+
+/* ══ RESPONSIVE ══ */
+@media(max-width:720px){
+  :root{--sw:56px}
+  #shead p,.nlbl,.ni span,#hfilt label,#hfilt select{display:none}
+  #shead h1{font-size:16px}
+  .ni{padding:11px;justify-content:center}
+  #content{padding:14px}
+  .frow{grid-template-columns:1fr}
+  .sgrid{grid-template-columns:1fr 1fr}
+  #geri-panel{width:calc(100vw - 20px);right:10px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ AUTH ═══ -->
+<div id="auth-wrap">
+  <div class="auth-card" id="auth-card"></div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app-wrap" style="display:none">
+  <div id="sidebar">
+    <div id="shead">
+      <h1>🏠 HomeBase</h1>
+      <p>Family Home Manager</p>
+    </div>
+    <nav id="snav">
+      <div class="nlbl">Overview</div>
+      <div class="ni active" onclick="go('dashboard')" data-v="dashboard"><span class="ico">📊</span><span>Dashboard</span></div>
+      <div class="ni" onclick="go('homes')" data-v="homes"><span class="ico">🏠</span><span>Homes</span></div>
+      <div class="nlbl">Manage</div>
+      <div class="ni" onclick="go('bills')" data-v="bills"><span class="ico">💳</span><span>Bills</span><span class="nbadge" id="bbadge" style="display:none">0</span></div>
+      <div class="ni" onclick="go('maint')" data-v="maint"><span class="ico">🔧</span><span>Maintenance</span><span class="nbadge" id="mbadge" style="display:none">0</span></div>
+      <div class="ni" onclick="go('cal')" data-v="cal"><span class="ico">📅</span><span>Calendar</span></div>
+      <div class="ni" onclick="go('systems')" data-v="systems"><span class="ico">⚡</span><span>Systems</span></div>
+      <div class="nlbl">Account</div>
+      <div class="ni" onclick="go('settings')" data-v="settings"><span class="ico">⚙️</span><span>Settings</span></div>
+    </nav>
+    <div id="hfilt">
+      <label>Filter by Home</label>
+      <select id="hsel" onchange="setFilter(this.value)"><option value="all">All Homes</option></select>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="topbar">
+      <h2 id="ptitle">Dashboard</h2>
+      <div class="tright">
+        <div class="tacts" id="tacts"></div>
+        <div class="user-chip" onclick="go('settings')" id="user-chip">
+          <div class="uavatar" id="user-avatar">?</div>
+          <div>
+            <div id="user-name" style="line-height:1.2">–</div>
+            <div class="role-tag" id="user-role"></div>
+          </div>
+        </div>
+        <button class="btn bs bsm" onclick="doLogout()">Sign Out</button>
+      </div>
+    </div>
+    <div id="content"></div>
+  </div>
+</div>
+
+<!-- ═══ GERONIMO ═══ -->
+<button id="geri-fab" onclick="geriToggle()">🤖 Ask Geronimo</button>
+<div id="geri-panel">
+  <div id="geri-hdr">
+    <div>
+      <div class="gtitle">🤖 Geronimo</div>
+      <div class="gsub">Your HomeBase assistant</div>
+    </div>
+    <button id="geri-close" onclick="geriToggle()">✕</button>
+  </div>
+  <div id="geri-msgs"></div>
+  <div class="geri-prompts" id="geri-prompts"></div>
+  <div id="geri-inp-row">
+    <input id="geri-inp" placeholder="Ask me anything…" onkeydown="if(event.key==='Enter')geriSend()">
+    <button id="geri-send" onclick="geriSend()">Send</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL ═══ -->
+<div id="moverlay" onclick="closeOvr(event)">
+  <div id="modal">
+    <div id="mtitle"></div>
+    <div id="mbody"></div>
+    <div id="macts">
+      <button class="btn bs" onclick="hideMod()">Cancel</button>
+      <button class="btn bp" id="msave" onclick="saveMod()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════
+const COLORS=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#6366f1'];
+const FREQS=[
+  {v:'weekly',l:'Weekly',d:7},{v:'biweekly',l:'Every 2 Weeks',d:14},
+  {v:'monthly',l:'Monthly',d:30},{v:'bimonthly',l:'Every 2 Months',d:60},
+  {v:'quarterly',l:'Quarterly',d:91},{v:'semiannual',l:'Semi-Annual',d:182},
+  {v:'annual',l:'Annual',d:365},{v:'oneoff',l:'One Time',d:null}
+];
+const MCATS=['HVAC','Plumbing','Electrical','Exterior','Interior','Appliances','Seasonal','Safety','Landscaping','Other'];
+const BCATS=['Mortgage/Rent','Utilities','Insurance','HOA','Internet/Cable','Security','Property Tax','Subscription','Other'];
+const SCATS=['HVAC','Plumbing','Electrical','Appliances','Security','Water','Structural','Other'];
+const MICONS={HVAC:'❄️',Plumbing:'🚿',Electrical:'⚡',Exterior:'🏡',Interior:'🛋️',Appliances:'🍽️',Seasonal:'🍂',Safety:'🔒',Landscaping:'🌿',Other:'🔧'};
+const MNTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const OWNER_EMAIL='fourpsandapod@gmail.com';
+
+// ═══════════════════════════════════════════
+// DB & SESSION
+// ═══════════════════════════════════════════
+let db={homes:[],bills:[],maint:[],events:[],systems:[],users:[],photos:{}};
+let session=null;
+let st={view:'dashboard',filt:'all',calM:new Date().getMonth(),calY:new Date().getFullYear(),mdata:{}};
+
+// ── Server sync config (set in Settings → Server Sync) ──
+function getSyncCfg(){
+  try{return JSON.parse(localStorage.getItem('hb_sync')||'{}');}catch(e){return{};}
+}
+function setSyncCfg(cfg){localStorage.setItem('hb_sync',JSON.stringify(cfg));}
+
+async function syncPush(data){
+  const cfg=getSyncCfg();
+  if(!cfg.url||!cfg.key)return;
+  try{
+    await fetch(cfg.url+'/api/data',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-API-Key':cfg.key},
+      body:JSON.stringify(data)
+    });
+  }catch(e){console.warn('Sync push failed:',e.message);}
+}
+
+async function syncPull(){
+  const cfg=getSyncCfg();
+  if(!cfg.url||!cfg.key)return false;
+  try{
+    const r=await fetch(cfg.url+'/api/data',{headers:{'X-API-Key':cfg.key}});
+    if(!r.ok)return false;
+    const d=await r.json();
+    if(d&&Array.isArray(d.homes)){
+      db=d;if(!db.photos)db.photos={};
+      localStorage.setItem('hb4',JSON.stringify(db));
+      return true;
+    }
+  }catch(e){console.warn('Sync pull failed:',e.message);}
+  return false;
+}
+
+function loadDB(){try{const r=localStorage.getItem('hb4');if(r){db=JSON.parse(r);if(!db.photos)db.photos={};}}catch(e){}}
+function saveDB(){localStorage.setItem('hb4',JSON.stringify(db));badges();syncPush(db);}
+
+// ═══════════════════════════════════════════
+// PASSWORD HASHING
+// ═══════════════════════════════════════════
+async function hashPwd(pwd){
+  const enc=new TextEncoder();
+  const data=enc.encode('homebase_2024_'+pwd+'_secure');
+  const buf=await crypto.subtle.digest('SHA-256',data);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ═══════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════
+function initAuth(){
+  loadDB();
+  try{const s=JSON.parse(localStorage.getItem('hb_sess'));if(s&&db.users.find(u=>u.id===s.userId)){session=s;}}catch(e){}
+  if(!session){try{const s=JSON.parse(sessionStorage.getItem('hb_sess'));if(s&&db.users.find(u=>u.id===s.userId)){session=s;}}catch(e){}}
+  if(session){launchApp();return;}
+  if(!db.users||!db.users.length){showSetup();}else{showLogin();}
+}
+
+function showSetup(){
+  document.getElementById('auth-card').innerHTML=`
+    <div class="auth-logo"><span class="ico">🏠</span><h1>Welcome to HomeBase!</h1><p>Create your admin account to get started.</p></div>
+    <div class="auth-note">You'll be the <strong>administrator</strong> and can add family members from Settings.</div>
+    <div id="auth-err" class="auth-err"></div>
+    <div class="fg"><label>Your Name</label><input class="fc" id="su-name" placeholder="e.g. Gerry" autocomplete="off"></div>
+    <div class="fg"><label>Password</label><input class="fc" id="su-pwd" type="password" placeholder="Min 4 characters"></div>
+    <div class="fg"><label>Confirm Password</label><input class="fc" id="su-pwd2" type="password" placeholder="Re-enter password"></div>
+    <button class="auth-btn" onclick="doSetup()">Create Admin Account →</button>`;
+  document.getElementById('su-name').focus();
+  ['su-name','su-pwd','su-pwd2'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')doSetup();}));
+}
+
+function showLogin(){
+  const names=db.users.map(u=>u.name);
+  document.getElementById('auth-card').innerHTML=`
+    <div class="auth-logo"><span class="ico">🏠</span><h1>HomeBase</h1><p>Sign in to continue</p></div>
+    <div id="auth-err" class="auth-err">Incorrect name or password.</div>
+    <div class="fg"><label>Your Name</label>
+      <input class="fc" id="li-name" placeholder="Enter your name" list="name-list" autocomplete="off">
+      <datalist id="name-list">${names.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
+    </div>
+    <div class="fg"><label>Password</label><input class="fc" id="li-pwd" type="password" placeholder="Enter your password"></div>
+    <div class="remember-row"><input type="checkbox" id="li-rem"><label for="li-rem">Keep me signed in on this device</label></div>
+    <button class="auth-btn" onclick="doLogin()">Sign In →</button>`;
+  document.getElementById('li-name').focus();
+  ['li-name','li-pwd'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();}));
+}
+
+async function doSetup(){
+  const name=document.getElementById('su-name').value.trim();
+  const pwd=document.getElementById('su-pwd').value;
+  const pwd2=document.getElementById('su-pwd2').value;
+  const errEl=document.getElementById('auth-err');
+  if(!name||pwd.length<4||pwd!==pwd2){
+    errEl.textContent=pwd!==pwd2?'Passwords do not match.':'Fill in all fields. Password must be at least 4 characters.';
+    errEl.classList.add('show');return;
+  }
+  const hash=await hashPwd(pwd);
+  const user={id:uid(),name,role:'admin',hash,created:today()};
+  db.users=[user];saveDB();
+  saveSession({userId:user.id,name:user.name,role:user.role},false);
+  launchApp();
+}
+
+async function doLogin(){
+  const name=document.getElementById('li-name').value.trim();
+  const pwd=document.getElementById('li-pwd').value;
+  const rem=document.getElementById('li-rem').checked;
+  const errEl=document.getElementById('auth-err');
+  if(!name||!pwd){errEl.textContent='Please enter your name and password.';errEl.classList.add('show');return;}
+  const hash=await hashPwd(pwd);
+  const user=db.users.find(u=>u.name.toLowerCase()===name.toLowerCase()&&u.hash===hash);
+  if(!user){errEl.classList.add('show');document.getElementById('li-pwd').value='';return;}
+  saveSession({userId:user.id,name:user.name,role:user.role},rem);
+  launchApp();
+}
+
+function saveSession(s,persist){
+  session=s;
+  const val=JSON.stringify(s);
+  sessionStorage.setItem('hb_sess',val);
+  if(persist)localStorage.setItem('hb_sess',val);
+}
+
+function doLogout(){
+  if(!confirm('Sign out of HomeBase?'))return;
+  session=null;
+  sessionStorage.removeItem('hb_sess');localStorage.removeItem('hb_sess');
+  document.getElementById('app-wrap').style.display='none';
+  document.getElementById('auth-wrap').classList.remove('hidden');
+  document.getElementById('geri-fab').classList.remove('visible');
+  document.getElementById('geri-panel').classList.remove('open');
+  showLogin();
+}
+
+async function launchApp(){
+  document.getElementById('auth-wrap').classList.add('hidden');
+  document.getElementById('app-wrap').style.display='flex';
+  document.getElementById('geri-fab').classList.add('visible');
+  const init=session.name.split(' ').map(w=>w[0]).join('').toUpperCase().substr(0,2);
+  document.getElementById('user-avatar').textContent=init;
+  document.getElementById('user-name').textContent=session.name;
+  document.getElementById('user-role').textContent=session.role==='admin'?'Admin':'Member';
+  // Pull latest data from server if sync is configured
+  const pulled=await syncPull();
+  if(pulled)toast('✅ Synced with server');
+  updFilter();
+  go('dashboard');
+  geriInit();
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function uid(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5)}
+function today(){return new Date().toISOString().split('T')[0]}
+function dfmt(s){if(!s)return'–';const d=new Date(s+'T00:00:00');return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+function dshort(s){if(!s)return'–';const d=new Date(s+'T00:00:00');return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}
+function ddays(s){if(!s)return 9999;const d=new Date(s+'T00:00:00'),n=new Date();n.setHours(0,0,0,0);return Math.round((d-n)/86400000)}
+function addD(s,n){const d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);return d.toISOString().split('T')[0]}
+function nextDue(last,fv){if(!last||!fv)return null;const f=FREQS.find(x=>x.v===fv);return(f&&f.d)?addD(last,f.d):null}
+function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
+function gh(id){return db.homes.find(h=>h.id===id)}
+function ghn(id){const h=gh(id);return h?h.name:'Unknown'}
+function ghc(id){const h=gh(id);return h?h.color:'#94a3b8'}
+function filt(arr){return st.filt==='all'?arr:arr.filter(x=>x.homeId===st.filt)}
+function badge(days){
+  if(days===9999||days===null||days===undefined)return'';
+  if(days<0)return'<span class="badge berr">Overdue</span>';
+  if(days<=7)return'<span class="badge bwarn">'+days+'d</span>';
+  if(days<=30)return'<span class="badge binfo">'+days+'d</span>';
+  return'<span class="badge bok">OK</span>';
+}
+function calcNext(b,isBill){
+  if(isBill)return b.nextDue||nextDue(b.lastPaid||b.startDate,b.frequency);
+  return b.nextDue||nextDue(b.lastDone,b.frequency);
+}
+function freqLabel(v){const f=FREQS.find(x=>x.v===v);return f?f.l:''}
+
+// Was this bill paid in the current billing period?
+function paidThisPeriod(b){
+  if(!b.lastPaid)return false;
+  const nd=calcNext(b,true);
+  if(!nd)return false;
+  const f=FREQS.find(x=>x.v===b.frequency);
+  if(!f||!f.d)return false;
+  const periodStart=addD(nd,-f.d);
+  return b.lastPaid>=periodStart&&b.lastPaid<=today();
+}
+
+// ═══════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════
+const TITLES={dashboard:'Dashboard',homes:'Homes',bills:'Bills & Payments',maint:'Maintenance',cal:'Calendar',systems:'Home Systems',settings:'Settings'};
+const ACTS={
+  homes:'<button class="btn bp" onclick="addHome()">+ Add Home</button>',
+  bills:'<button class="btn bp" onclick="addBill()">+ Add Bill</button>',
+  maint:'<button class="btn bp" onclick="addMaint()">+ Add Task</button>',
+  cal:'<button class="btn bp" onclick="addEvent()">+ Add Event</button>',
+  systems:'<button class="btn bp" onclick="addSys()">+ Add System</button>',
+};
+
+function go(view){
+  st.view=view;
+  document.querySelectorAll('.ni').forEach(el=>el.classList.toggle('active',el.dataset.v===view));
+  document.getElementById('ptitle').textContent=TITLES[view]||view;
+  document.getElementById('tacts').innerHTML=ACTS[view]||'';
+  render();
+}
+
+function setFilter(v){st.filt=v;render();}
+
+function badges(){
+  const ub=db.bills.filter(b=>{const d=ddays(calcNext(b,true));return d<=7&&d>-999}).length;
+  const um=db.maint.filter(m=>{const d=ddays(calcNext(m,false));return d<=7&&d>-999}).length;
+  const bb=document.getElementById('bbadge'),mb=document.getElementById('mbadge');
+  if(bb){bb.style.display=ub?'':'none';bb.textContent=ub;}
+  if(mb){mb.style.display=um?'':'none';mb.textContent=um;}
+}
+
+function updFilter(){
+  const sel=document.getElementById('hsel');if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="all">All Homes</option>'+db.homes.map(h=>`<option value="${h.id}" ${h.id===cur?'selected':''}>${esc(h.name)}</option>`).join('');
+}
+
+function render(){
+  const rs={dashboard:rDash,homes:rHomes,bills:rBills,maint:rMaint,cal:rCal,systems:rSys,settings:rSettings};
+  (rs[st.view]||rDash)();
+}
+
+// ═══════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════
+function rDash(){
+  const el=document.getElementById('content');
+  if(!db.homes.length){
+    el.innerHTML=`<div id="welcome"><div class="wcard"><div style="font-size:60px;margin-bottom:14px">🏠</div><h2>Welcome, ${esc(session.name)}!</h2><p>Your family home management hub. Start by adding your first home.</p><button class="btn bp" style="font-size:14px;padding:10px 24px" onclick="addHome()">+ Add Your First Home</button></div></div>`;
+    return;
+  }
+  const ub=filt(db.bills).map(b=>({...b,_nd:calcNext(b,true)})).filter(b=>ddays(b._nd)<=30).sort((a,b)=>ddays(a._nd)-ddays(b._nd)).slice(0,8);
+  const um=filt(db.maint).map(m=>({...m,_nd:calcNext(m,false)})).filter(m=>ddays(m._nd)<=30).sort((a,b)=>ddays(a._nd)-ddays(b._nd)).slice(0,8);
+  const t=today();
+  const ue=filt(db.events).filter(e=>e.date>=t).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,6);
+  const ob=db.bills.filter(b=>ddays(calcNext(b,true))<0).length;
+  const om=db.maint.filter(m=>ddays(calcNext(m,false))<0).length;
+  el.innerHTML=`
+  <div class="sgrid">
+    <div class="sc"><div class="sv">${db.homes.length}</div><div class="sl">🏠 Homes managed</div></div>
+    <div class="sc ${ob?'err':''}"><div class="sv">${ob}</div><div class="sl">💳 Overdue bills</div></div>
+    <div class="sc ${om?'warn':''}"><div class="sv">${om}</div><div class="sl">🔧 Overdue tasks</div></div>
+    <div class="sc"><div class="sv">${ue.length}</div><div class="sl">📅 Upcoming events</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" id="dbcols">
+    <div class="card">
+      <div class="ch"><div class="ct">💳 Bills Due Soon</div><button class="btn bs bsm" onclick="go('bills')">View All</button></div>
+      ${ub.length?ub.map(b=>{const d=ddays(b._nd),paid=paidThisPeriod(b);return`<div class="aitem ${d<0&&!paid?'err':d<=7&&!paid?'warn':''}"><div class="aico">${paid?'✅':d<0?'🔴':d<=7?'🟠':'🟡'}</div><div class="ainfo"><div class="atitle">${esc(b.name)}</div><div class="adesc">${esc(ghn(b.homeId))}${b.amount?' • $'+parseFloat(b.amount).toFixed(2):''} • Due ${dshort(b._nd)}</div></div>${paid?'<span class="badge bpaid">Paid ✓</span>':badge(d)}</div>`}).join(''):'<div class="empty" style="padding:20px"><div class="eico">✅</div><p>No bills due in 30 days</p></div>'}
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">🔧 Maintenance Due</div><button class="btn bs bsm" onclick="go('maint')">View All</button></div>
+      ${um.length?um.map(m=>{const d=ddays(m._nd);return`<div class="aitem ${d<0?'err':d<=7?'warn':''}"><div class="aico">${d<0?'🔴':d<=7?'🟠':'🟡'}</div><div class="ainfo"><div class="atitle">${esc(m.name)}</div><div class="adesc">${esc(ghn(m.homeId))} • ${esc(m.category)} • Due ${dshort(m._nd)}</div></div>${badge(d)}</div>`}).join(''):'<div class="empty" style="padding:20px"><div class="eico">✅</div><p>No tasks due in 30 days</p></div>'}
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="ch"><div class="ct">📅 Upcoming Events</div><button class="btn bs bsm" onclick="go('cal')">Calendar</button></div>
+    ${ue.length?`<div class="ilist">${ue.map(e=>`<div class="irow"><div class="hdot" style="background:${ghc(e.homeId)}"></div><div class="iinfo"><div class="ititle">${esc(e.title)}</div><div class="isub">${esc(ghn(e.homeId))}${e.notes?' • '+esc(e.notes):''}</div></div><div class="imeta"><div class="idate">${dshort(e.date)}</div></div></div>`).join('')}</div>`:'<div class="empty" style="padding:20px"><div class="eico">📅</div><p>No upcoming events</p></div>'}
+  </div>`;
+  if(window.innerWidth<600)document.getElementById('dbcols').style.gridTemplateColumns='1fr';
+}
+
+// ═══════════════════════════════════════════
+// HOMES
+// ═══════════════════════════════════════════
+function rHomes(){
+  const el=document.getElementById('content');
+  if(!db.homes.length){el.innerHTML=`<div class="empty"><div class="eico">🏠</div><h3>No homes yet</h3><p>Add your first home to get started.</p><button class="btn bp" onclick="addHome()">+ Add Home</button></div>`;return;}
+  el.innerHTML=`<div class="cgrid">${db.homes.map(h=>{
+    const hb=db.bills.filter(b=>b.homeId===h.id),hm=db.maint.filter(m=>m.homeId===h.id),he=db.events.filter(e=>e.homeId===h.id);
+    const ob=hb.filter(b=>ddays(calcNext(b,true))<0&&!paidThisPeriod(b)).length;
+    const photo=db.photos&&db.photos[h.id];
+    return`<div class="hcard">
+      ${photo?`<img class="hcphoto" src="${photo}" alt="${esc(h.name)}" onclick="changeHomePhoto('${h.id}')" title="Click to change photo">`:`<div class="hcphoto-placeholder" onclick="uploadHomePhoto('${h.id}')">📷 Add property photo</div><div class="hcbar" style="background:${h.color}"></div>`}
+      <div class="hcbody">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between">
+          <div><div class="hcname">${esc(h.name)}</div><div class="hcaddr">${esc(h.address)||'No address set'}</div></div>
+          <div style="display:flex;gap:3px">
+            ${photo?`<button class="bico" title="Change photo" onclick="changeHomePhoto('${h.id}')">📷</button>`:''}
+            <button class="bico" onclick="editHome('${h.id}')">✏️</button><button class="bico" onclick="delHome('${h.id}')">🗑️</button></div>
+        </div>
+        ${h.notes?`<div style="margin-top:7px;font-size:12px;color:var(--muted)">${esc(h.notes)}</div>`:''}
+        <div class="hcstats">
+          <div class="hstat"><div class="hstatv" ${ob?'style="color:var(--err)"':''}>${hb.length}</div><div class="hstatl">Bills</div></div>
+          <div class="hstat"><div class="hstatv">${hm.length}</div><div class="hstatl">Tasks</div></div>
+          <div class="hstat"><div class="hstatv">${he.length}</div><div class="hstatl">Events</div></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+function addHome(){st.mdata={mode:'add',type:'home'};showMod('Add Home',homeForm({}))}
+function editHome(id){st.mdata={mode:'edit',type:'home',id};showMod('Edit Home',homeForm(gh(id)||{}))}
+function delHome(id){
+  if(!confirm('Delete this home? All related data will also be removed.'))return;
+  db.homes=db.homes.filter(h=>h.id!==id);
+  ['bills','maint','events','systems'].forEach(k=>db[k]=db[k].filter(x=>x.homeId!==id));
+  saveDB();updFilter();render();toast('Home deleted');
+}
+function uploadHomePhoto(homeId){
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    if(f.size>5*1024*1024){alert('Photo must be under 5MB.');return;}
+    const r=new FileReader();
+    r.onload=ev=>{
+      if(!db.photos)db.photos={};
+      db.photos[homeId]=ev.target.result;
+      saveDB();render();toast('Photo added! 📷');
+    };r.readAsDataURL(f);
+  };inp.click();
+}
+function changeHomePhoto(homeId){
+  const opts=`<div style="display:flex;flex-direction:column;gap:10px">
+    <button class="btn bp" onclick="hideMod();uploadHomePhoto('${homeId}')">📷 Upload New Photo</button>
+    <button class="btn bs" style="color:var(--err)" onclick="removeHomePhoto('${homeId}')">🗑️ Remove Photo</button>
+  </div>`;
+  st.mdata={mode:'photoopts',type:'home',id:homeId};
+  showMod('Property Photo',opts);
+  document.getElementById('msave').style.display='none';
+}
+function removeHomePhoto(homeId){
+  if(!confirm('Remove this property photo?'))return;
+  if(db.photos)delete db.photos[homeId];
+  saveDB();hideMod();render();toast('Photo removed');
+}
+
+function homeForm(h){
+  const cp=COLORS.map(c=>`<div class="colopt ${(h.color||COLORS[0])===c?'sel':''}" style="background:${c}" onclick="pickCol('${c}',this)"></div>`).join('');
+  return`<div class="fg"><label>Home Name *</label><input class="fc" id="f-name" value="${esc(h.name||'')}" placeholder="e.g. Main House, Beach Cottage"></div>
+  <div class="fg"><label>Address</label><input class="fc" id="f-address" value="${esc(h.address||'')}" placeholder="123 Main St, City, State"></div>
+  <div class="fg"><label>Color</label><div class="colopts">${cp}</div><input type="hidden" id="f-color" value="${h.color||COLORS[0]}"></div>
+  <div class="fg"><label>Notes</label><textarea class="fc" id="f-notes" placeholder="Notes about this property...">${esc(h.notes||'')}</textarea></div>`;
+}
+function pickCol(c,el){document.querySelectorAll('.colopt').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');document.getElementById('f-color').value=c}
+
+// ═══════════════════════════════════════════
+// BILLS (with payment links + status)
+// ═══════════════════════════════════════════
+function rBills(){
+  const el=document.getElementById('content');
+  const bills=filt(db.bills).map(b=>({...b,_nd:calcNext(b,true),_paid:paidThisPeriod(b)})).sort((a,b)=>{
+    if(a._paid&&!b._paid)return 1;if(!a._paid&&b._paid)return-1;
+    return ddays(a._nd)-ddays(b._nd);
+  });
+  if(!bills.length){el.innerHTML=`<div class="empty"><div class="eico">💳</div><h3>No bills yet</h3><p>Track recurring bills, add payment links, and stay on top of due dates.</p><button class="btn bp" onclick="addBill()">+ Add Bill</button></div>`;return;}
+  el.innerHTML=`<div class="ilist">${bills.map(b=>{
+    const d=ddays(b._nd),f=freqLabel(b.frequency);
+    return`<div class="irow ${b._paid?'paid-row':''}">
+      <div class="hdot" style="background:${ghc(b.homeId)}"></div>
+      <div class="iinfo">
+        <div class="ititle">${esc(b.name)}</div>
+        <div class="isub">${esc(ghn(b.homeId))} • ${esc(b.category||'')} • ${f}${b.accountNum?' • Acct: '+esc(b.accountNum):''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+        ${b.amount?`<div class="imeta"><div class="iamt">$${parseFloat(b.amount).toFixed(2)}</div><div class="idate">${b._nd?'Due '+dshort(b._nd):'–'}</div></div>`:`<div class="imeta"><div class="idate">${b._nd?'Due '+dshort(b._nd):'–'}</div></div>`}
+        ${b._paid?'<span class="badge bpaid">✓ Paid</span>':badge(d)}
+        ${b.paymentUrl?`<a class="pay-btn" href="${esc(b.paymentUrl)}" target="_blank" rel="noopener">💳 Pay Now</a>`:''}
+        ${!b._paid?`<button class="btn bsm" style="background:var(--ok);color:#fff" onclick="markPaid('${b.id}')">✓ Mark Paid</button>`:`<button class="btn bsm bs" onclick="markPaid('${b.id}')">Re-mark Paid</button>`}
+        <button class="bico" onclick="editBill('${b.id}')">✏️</button>
+        <button class="bico" onclick="delBill('${b.id}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+function addBill(){if(!db.homes.length){alert('Add a home first.');return;}st.mdata={mode:'add',type:'bill'};showMod('Add Bill',billForm({}))}
+function editBill(id){const b=db.bills.find(x=>x.id===id);st.mdata={mode:'edit',type:'bill',id};showMod('Edit Bill',billForm(b))}
+function delBill(id){if(!confirm('Delete this bill?'))return;db.bills=db.bills.filter(x=>x.id!==id);saveDB();render();toast('Bill deleted')}
+function markPaid(id){
+  st.mdata={mode:'markpaid',type:'bill',id};
+  const b=db.bills.find(x=>x.id===id);
+  showMod('Mark as Paid',`
+    <div style="margin-bottom:14px;font-size:14px;font-weight:500">${esc(b.name)}</div>
+    <div class="frow">
+      <div class="fg"><label>Amount Paid ($)</label><input class="fc" id="f-paidamt" type="number" step="0.01" value="${b.amount||''}" placeholder="0.00"></div>
+      <div class="fg"><label>Date Paid</label><input class="fc" id="f-paiddate" type="date" value="${today()}"></div>
+    </div>
+    <div class="fg"><label>Notes (optional)</label><input class="fc" id="f-paidnotes" placeholder="e.g. Auto-paid, confirmation #123"></div>
+    ${b.paymentUrl?`<div style="margin-bottom:12px"><a class="pay-btn" href="${esc(b.paymentUrl)}" target="_blank" rel="noopener" style="font-size:13px;padding:7px 12px">💳 Open Payment Site First →</a></div>`:''}
+  `);
+}
+
+function billForm(b){
+  const ho=db.homes.map(h=>`<option value="${h.id}" ${b.homeId===h.id?'selected':''}>${esc(h.name)}</option>`).join('');
+  const fo=FREQS.map(f=>`<option value="${f.v}" ${b.frequency===f.v?'selected':''}>${f.l}</option>`).join('');
+  const co=BCATS.map(c=>`<option value="${c}" ${b.category===c?'selected':''}>${c}</option>`).join('');
+  return`<div class="fg"><label>Bill Name *</label><input class="fc" id="f-name" value="${esc(b.name||'')}" placeholder="e.g. Electric Bill, Mortgage, Internet"></div>
+  <div class="frow">
+    <div class="fg"><label>Home *</label><select class="fc fsel" id="f-homeId"><option value="">Select home…</option>${ho}</select></div>
+    <div class="fg"><label>Category</label><select class="fc fsel" id="f-category">${co}</select></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>Amount ($)</label><input class="fc" id="f-amount" type="number" step="0.01" min="0" value="${esc(String(b.amount||''))}" placeholder="0.00"></div>
+    <div class="fg"><label>Frequency</label><select class="fc fsel" id="f-frequency">${fo}</select></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>Next Due Date</label><input class="fc" id="f-nextDue" type="date" value="${b.nextDue||''}"></div>
+    <div class="fg"><label>Last Paid</label><input class="fc" id="f-lastPaid" type="date" value="${b.lastPaid||''}"></div>
+  </div>
+  <div class="fg"><label>Payment Website URL</label><input class="fc" id="f-paymentUrl" type="url" value="${esc(b.paymentUrl||'')}" placeholder="https://www.utilityprovider.com/pay"></div>
+  <div class="fg"><label>Account Number (for reference)</label><input class="fc" id="f-accountNum" value="${esc(b.accountNum||'')}" placeholder="Account # or policy #"></div>
+  <div class="fg"><label>Notes</label><textarea class="fc" id="f-notes" placeholder="Auto-pay status, contact info…">${esc(b.notes||'')}</textarea></div>`;
+}
+
+// ═══════════════════════════════════════════
+// MAINTENANCE
+// ═══════════════════════════════════════════
+function rMaint(){
+  const el=document.getElementById('content');
+  const tasks=filt(db.maint).map(m=>({...m,_nd:calcNext(m,false)})).sort((a,b)=>{
+    const da=ddays(a._nd),db2=ddays(b._nd);
+    if(da===9999&&db2===9999)return 0;return da-db2;
+  });
+  if(!tasks.length){el.innerHTML=`<div class="empty"><div class="eico">🔧</div><h3>No maintenance tasks</h3><p>Track filter changes, seasonal projects, inspections, and more.</p><button class="btn bp" onclick="addMaint()">+ Add Task</button></div>`;return;}
+  el.innerHTML=`<div class="ilist">${tasks.map(m=>{
+    const d=ddays(m._nd),f=freqLabel(m.frequency);
+    return`<div class="irow">
+      <div class="mico">${MICONS[m.category]||'🔧'}</div>
+      <div class="hdot" style="background:${ghc(m.homeId)}"></div>
+      <div class="iinfo"><div class="ititle">${esc(m.name)}</div><div class="isub">${esc(ghn(m.homeId))} • ${esc(m.category)} • ${f}</div></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="imeta">
+          <div class="idate" style="text-align:right">${m.lastDone?'Done: '+dshort(m.lastDone):'Never done'}</div>
+          <div class="idate" style="text-align:right">${m._nd?'Due: '+dshort(m._nd):'–'}</div>
+        </div>
+        ${badge(d)}
+        <button class="btn bsm" style="background:var(--ok);color:#fff" onclick="doneMaint('${m.id}')">✓ Done</button>
+        ${db.homes.length>1?`<button class="bico" title="Copy to other homes" onclick="copyMaint('${m.id}')">📋</button>`:''}
+        <button class="bico" onclick="editMaint('${m.id}')">✏️</button>
+        <button class="bico" onclick="delMaint('${m.id}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+function addMaint(){if(!db.homes.length){alert('Add a home first.');return;}st.mdata={mode:'add',type:'maint'};showMod('Add Maintenance Task',maintForm({}))}
+function editMaint(id){const m=db.maint.find(x=>x.id===id);st.mdata={mode:'edit',type:'maint',id};showMod('Edit Task',maintForm(m))}
+function delMaint(id){if(!confirm('Delete this task?'))return;db.maint=db.maint.filter(x=>x.id!==id);saveDB();render();toast('Task deleted')}
+function doneMaint(id){const m=db.maint.find(x=>x.id===id);if(!m)return;m.lastDone=today();m.nextDue=nextDue(m.lastDone,m.frequency);saveDB();render();toast('Marked as done ✓')}
+
+function copyMaint(id){
+  const m=db.maint.find(x=>x.id===id);if(!m)return;
+  const otherHomes=db.homes.filter(h=>h.id!==m.homeId);
+  if(!otherHomes.length){toast('No other homes to copy to.');return;}
+  const opts=otherHomes.map(h=>{
+    const tasksAtHome=db.maint.filter(x=>x.homeId===h.id&&x.name===m.name).length;
+    const dot=`<div class="hdot" style="background:${h.color}"></div>`;
+    return`<label class="copy-home-opt"><input type="checkbox" value="${h.id}" id="cph-${h.id}"><div style="display:flex;align-items:center;gap:8px;flex:1">${dot}<div><div>${esc(h.name)}</div>${tasksAtHome?`<div class="hcd">⚠️ Already has a task with this name</div>`:''}</div></div></label>`;
+  }).join('');
+  st.mdata={mode:'copymaint',type:'maint',id};
+  showMod(`📋 Copy Task to Other Homes`,`
+    <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Copy "<strong>${esc(m.name)}</strong>" to:</div>
+    <div id="copy-homes-list">${opts}</div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr);display:flex;gap:8px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="copy-reset-dates" checked> Reset "Last Done" date on copies</label>
+    </div>`);
+  document.getElementById('msave').textContent='Copy to Selected';
+}
+function maintForm(m){
+  const ho=db.homes.map(h=>`<option value="${h.id}" ${m.homeId===h.id?'selected':''}>${esc(h.name)}</option>`).join('');
+  const fo=FREQS.map(f=>`<option value="${f.v}" ${m.frequency===f.v?'selected':''}>${f.l}</option>`).join('');
+  const co=MCATS.map(c=>`<option value="${c}" ${m.category===c?'selected':''}>${c}</option>`).join('');
+  return`<div class="fg"><label>Task Name *</label><input class="fc" id="f-name" value="${esc(m.name||'')}" placeholder="e.g. Change HVAC Filter, Clean Gutters"></div>
+  <div class="frow">
+    <div class="fg"><label>Home *</label><select class="fc fsel" id="f-homeId"><option value="">Select home…</option>${ho}</select></div>
+    <div class="fg"><label>Category</label><select class="fc fsel" id="f-category">${co}</select></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>Frequency</label><select class="fc fsel" id="f-frequency">${fo}</select></div>
+    <div class="fg"><label>Last Done</label><input class="fc" id="f-lastDone" type="date" value="${m.lastDone||''}"></div>
+  </div>
+  <div class="fg"><label>Next Due (blank = auto-calculate)</label><input class="fc" id="f-nextDue" type="date" value="${m.nextDue||''}"></div>
+  <div class="fg"><label>Notes</label><textarea class="fc" id="f-notes" placeholder="Instructions, vendor contacts, filter size…">${esc(m.notes||'')}</textarea></div>`;
+}
+
+// ═══════════════════════════════════════════
+// CALENDAR
+// ═══════════════════════════════════════════
+function rCal(){
+  const el=document.getElementById('content');
+  const Y=st.calY,M=st.calM;
+  const ms=`${Y}-${String(M+1).padStart(2,'0')}`;
+  const first=new Date(Y,M,1),last=new Date(Y,M+1,0);
+  const pad=first.getDay(),cells=Math.ceil((pad+last.getDate())/7)*7,tstr=today();
+  const evMap={};
+  filt(db.events).filter(e=>e.date&&e.date.startsWith(ms)).forEach(e=>{const k=e.date.split('-')[2];if(!evMap[k])evMap[k]=[];evMap[k].push(e);});
+  const dueMap={};
+  filt(db.bills).forEach(b=>{const d=calcNext(b,true);if(d&&d.startsWith(ms)){const k=d.split('-')[2];if(!dueMap[k])dueMap[k]=[];dueMap[k].push({type:'bill',name:b.name,homeId:b.homeId})}});
+  filt(db.maint).forEach(m=>{const d=calcNext(m,false);if(d&&d.startsWith(ms)){const k=d.split('-')[2];if(!dueMap[k])dueMap[k]=[];dueMap[k].push({type:'maint',name:m.name,homeId:m.homeId})}});
+  let chtml='';
+  for(let i=0;i<cells;i++){
+    const dn=i-pad+1,om=dn<1||dn>last.getDate();
+    const ds=`${Y}-${String(M+1).padStart(2,'0')}-${String(dn).padStart(2,'0')}`;
+    const isT=ds===tstr,dk=String(dn).padStart(2,'0');
+    const evs=om?[]:(evMap[dk]||[]),dues=om?[]:(dueMap[dk]||[]);
+    chtml+=`<div class="cd ${om?'om':''} ${isT?'tdy':''}"><div class="cdn">${om?'':dn}</div>${evs.map(e=>`<div class="cev" style="background:${ghc(e.homeId)}22;color:${ghc(e.homeId)};border-left:2px solid ${ghc(e.homeId)}">${esc(e.title)}</div>`).join('')}${dues.map(d=>`<div class="cev" style="background:${d.type==='bill'?'#fef3c7':'#f0fdf4'};color:${d.type==='bill'?'#92400e':'#166534'}">${d.type==='bill'?'💳':'🔧'} ${esc(d.name)}</div>`).join('')}</div>`;
+  }
+  const mevs=filt(db.events).filter(e=>e.date&&e.date.startsWith(ms)).sort((a,b)=>a.date.localeCompare(b.date));
+  el.innerHTML=`
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <button class="btn bs" onclick="calNav(-1)">← Prev</button>
+      <h3 style="font-size:17px;font-weight:600">${MNTHS[M]} ${Y}</h3>
+      <button class="btn bs" onclick="calNav(1)">Next →</button>
+    </div>
+    <div class="calgrid">${DNAMES.map(d=>`<div class="cdh">${d}</div>`).join('')}${chtml}</div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct">Events in ${MNTHS[M]}</div><button class="btn bp bsm" onclick="addEvent()">+ Add Event</button></div>
+    ${mevs.length?`<div class="ilist">${mevs.map(e=>`<div class="irow"><div class="hdot" style="background:${ghc(e.homeId)}"></div><div class="iinfo"><div class="ititle">${esc(e.title)}</div><div class="isub">${esc(ghn(e.homeId))}${e.notes?' • '+esc(e.notes):''}</div></div><div style="display:flex;align-items:center;gap:8px"><div class="imeta"><div class="idate">${dfmt(e.date)}</div></div><button class="bico" onclick="editEvent('${e.id}')">✏️</button><button class="bico" onclick="delEvent('${e.id}')">🗑️</button></div></div>`).join('')}</div>`:'<p style="color:var(--muted);font-size:13px">No events this month.</p>'}
+  </div>`;
+}
+function calNav(d){st.calM+=d;if(st.calM>11){st.calM=0;st.calY++;}if(st.calM<0){st.calM=11;st.calY--;}render();}
+function addEvent(){if(!db.homes.length){alert('Add a home first.');return;}st.mdata={mode:'add',type:'event'};showMod('Add Event',eventForm({}))}
+function editEvent(id){const e=db.events.find(x=>x.id===id);st.mdata={mode:'edit',type:'event',id};showMod('Edit Event',eventForm(e))}
+function delEvent(id){if(!confirm('Delete this event?'))return;db.events=db.events.filter(x=>x.id!==id);saveDB();render();toast('Event deleted')}
+function eventForm(e){
+  const ho=db.homes.map(h=>`<option value="${h.id}" ${e.homeId===h.id?'selected':''}>${esc(h.name)}</option>`).join('');
+  return`<div class="fg"><label>Event Title *</label><input class="fc" id="f-title" value="${esc(e.title||'')}" placeholder="e.g. Family Visit, Plumber, Inspection"></div>
+  <div class="frow">
+    <div class="fg"><label>Home *</label><select class="fc fsel" id="f-homeId"><option value="">Select home…</option>${ho}</select></div>
+    <div class="fg"><label>Date *</label><input class="fc" id="f-date" type="date" value="${e.date||''}"></div>
+  </div>
+  <div class="fg"><label>Notes</label><textarea class="fc" id="f-notes" placeholder="Details…">${esc(e.notes||'')}</textarea></div>`;
+}
+
+// ═══════════════════════════════════════════
+// SYSTEMS (with email drafting)
+// ═══════════════════════════════════════════
+function rSys(){
+  const el=document.getElementById('content');
+  const sys=filt(db.systems);
+  if(!sys.length){el.innerHTML=`<div class="empty"><div class="eico">⚡</div><h3>No systems recorded</h3><p>Document HVAC, appliances, utility shutoffs, and service contacts.</p><button class="btn bp" onclick="addSys()">+ Add System</button></div>`;return;}
+  const byCat=SCATS.reduce((acc,c)=>{const items=sys.filter(s=>s.category===c);if(items.length)acc[c]=items;return acc},{});
+  const oth=sys.filter(s=>!SCATS.includes(s.category));if(oth.length)byCat['Other']=[...(byCat['Other']||[]),...oth];
+  el.innerHTML=Object.entries(byCat).map(([cat,items])=>`
+  <div class="sysg">
+    <div class="sysch"><span>${cat}</span><span style="font-weight:400;text-transform:none;letter-spacing:0">${items.length} item${items.length!==1?'s':''}</span></div>
+    ${items.map(s=>`<div class="sysc">
+      <div class="syschdr">
+        <div>
+          <div class="syscname"><div class="hdot" style="background:${ghc(s.homeId)}"></div>${esc(s.name)}</div>
+          <div class="syscsub">${esc(ghn(s.homeId))}${s.location?' • '+esc(s.location):''}</div>
+        </div>
+        <div style="display:flex;gap:3px;flex-wrap:wrap;align-items:center">
+          ${s.contactName||s.contactPhone?`<button class="btn bs bsm" onclick="showEmailDraft('${s.id}')">📧 Draft Email</button>`:''}
+          <button class="bico" onclick="editSys('${s.id}')">✏️</button>
+          <button class="bico" onclick="delSys('${s.id}')">🗑️</button>
+        </div>
+      </div>
+      <div class="sysdets">
+        ${s.brand||s.model?`<div class="sysdet"><div class="sdl">Brand / Model</div><div class="sdv">${esc(s.brand||'')} ${esc(s.model||'')}</div></div>`:''}
+        ${s.serial?`<div class="sysdet"><div class="sdl">Serial #</div><div class="sdv">${esc(s.serial)}</div></div>`:''}
+        ${s.installed?`<div class="sysdet"><div class="sdl">Installed</div><div class="sdv">${dfmt(s.installed)}</div></div>`:''}
+        ${s.nextService?`<div class="sysdet"><div class="sdl">Next Service</div><div class="sdv" ${ddays(s.nextService)<0?'style="color:var(--err)"':''}>${dfmt(s.nextService)}</div></div>`:''}
+        ${s.contactName?`<div class="sysdet"><div class="sdl">Contact</div><div class="sdv">${esc(s.contactName)}</div></div>`:''}
+        ${s.contactPhone?`<div class="sysdet"><div class="sdl">Phone</div><div class="sdv"><a href="tel:${esc(s.contactPhone)}">${esc(s.contactPhone)}</a></div></div>`:''}
+      </div>
+      ${s.notes?`<div style="margin-top:8px;font-size:11.5px;color:var(--muted);border-top:1px solid var(--bdr);padding-top:7px">${esc(s.notes)}</div>`:''}
+    </div>`).join('')}
+  </div>`).join('');
+}
+function addSys(){if(!db.homes.length){alert('Add a home first.');return;}st.mdata={mode:'add',type:'system'};showMod('Add System / Appliance',sysForm({}))}
+function editSys(id){const s=db.systems.find(x=>x.id===id);st.mdata={mode:'edit',type:'system',id};showMod('Edit System',sysForm(s))}
+function delSys(id){if(!confirm('Delete this system?'))return;db.systems=db.systems.filter(x=>x.id!==id);saveDB();render();toast('System deleted')}
+function sysForm(s){
+  const ho=db.homes.map(h=>`<option value="${h.id}" ${s.homeId===h.id?'selected':''}>${esc(h.name)}</option>`).join('');
+  const co=SCATS.map(c=>`<option value="${c}" ${s.category===c?'selected':''}>${c}</option>`).join('');
+  return`<div class="fg"><label>Name *</label><input class="fc" id="f-name" value="${esc(s.name||'')}" placeholder="e.g. Central HVAC, Water Heater"></div>
+  <div class="frow"><div class="fg"><label>Home *</label><select class="fc fsel" id="f-homeId"><option value="">Select home…</option>${ho}</select></div><div class="fg"><label>Category</label><select class="fc fsel" id="f-category">${co}</select></div></div>
+  <div class="fg"><label>Location</label><input class="fc" id="f-location" value="${esc(s.location||'')}" placeholder="e.g. Basement, Garage"></div>
+  <div class="frow"><div class="fg"><label>Brand</label><input class="fc" id="f-brand" value="${esc(s.brand||'')}"></div><div class="fg"><label>Model #</label><input class="fc" id="f-model" value="${esc(s.model||'')}"></div></div>
+  <div class="frow"><div class="fg"><label>Serial #</label><input class="fc" id="f-serial" value="${esc(s.serial||'')}"></div><div class="fg"><label>Install Date</label><input class="fc" id="f-installed" type="date" value="${s.installed||''}"></div></div>
+  <div class="frow"><div class="fg"><label>Service Contact</label><input class="fc" id="f-contactName" value="${esc(s.contactName||'')}"></div><div class="fg"><label>Contact Phone</label><input class="fc" id="f-contactPhone" value="${esc(s.contactPhone||'')}"></div></div>
+  <div class="fg"><label>Next Service Date</label><input class="fc" id="f-nextService" type="date" value="${s.nextService||''}"></div>
+  <div class="fg"><label>Notes</label><textarea class="fc" id="f-notes" placeholder="Shutoff location, filter size, warranty info…">${esc(s.notes||'')}</textarea></div>`;
+}
+
+// ── Email Draft from Systems ──
+function showEmailDraft(sysId, typeOverride){
+  const s=db.systems.find(x=>x.id===sysId);
+  if(!s)return;
+  const home=gh(s.homeId);
+  const addr=home?home.address:'';
+  st.mdata={mode:'emaildraft',type:'system',id:sysId};
+
+  const types=[
+    {k:'service',l:'Service Request'},
+    {k:'annual',l:'Annual Service / Checkup'},
+    {k:'emergency',l:'Emergency / Urgent'},
+    {k:'quote',l:'Request a Quote'},
+  ];
+  const sel=typeOverride||'service';
+  const typeSelect=types.map(t=>`<option value="${t.k}" ${sel===t.k?'selected':''}>${t.l}</option>`).join('');
+
+  const draft=buildEmailDraft(s,home,sel);
+  const subject=draft.subject;
+  const body=draft.body;
+  const mailtoBody=encodeURIComponent(body);
+  const mailtoSubj=encodeURIComponent(subject);
+  const to=encodeURIComponent(s.contactPhone?'':''/* vendor email unknown, use blank */);
+
+  document.getElementById('mtitle').textContent=`📧 Draft Email — ${s.name}`;
+  document.getElementById('mbody').innerHTML=`
+    <div class="fg">
+      <label>Email Type</label>
+      <select class="fc fsel" id="email-type" onchange="showEmailDraft('${sysId}',this.value)">${typeSelect}</select>
+    </div>
+    <div class="fg"><label>To</label><input class="fc" id="email-to" value="${esc(s.contactName||'')}" placeholder="Vendor / company name or email"></div>
+    <div class="fg"><label>Subject</label><input class="fc" id="email-subject" value="${esc(subject)}"></div>
+    <div class="fg"><label>Email Body</label><textarea class="fc" id="email-body" style="min-height:200px">${esc(body)}</textarea></div>
+    <div class="email-actions">
+      <button class="copy-btn" id="copy-email-btn" onclick="copyEmail()">📋 Copy to Clipboard</button>
+      <a class="mailto-btn" id="mailto-link" href="mailto:${to}?subject=${mailtoSubj}&body=${mailtoBody}" target="_blank">✉️ Open in Email App</a>
+    </div>`;
+  document.getElementById('moverlay').classList.add('open');
+  document.getElementById('msave').style.display='none';
+  document.getElementById('mbody').querySelector('#email-body').addEventListener('input',()=>{
+    const newBody=encodeURIComponent(document.getElementById('email-body').value);
+    const newSubj=encodeURIComponent(document.getElementById('email-subject').value);
+    document.getElementById('mailto-link').href=`mailto:?subject=${newSubj}&body=${newBody}`;
+  });
+}
+
+function buildEmailDraft(s,home,type){
+  const senderName=session?session.name:'Property Owner';
+  const homeAddr=home?home.address:'our property';
+  const homeName=home?home.name:'the property';
+  const vendor=s.contactName||'Service Provider';
+  const sysName=s.name;
+  const brand=s.brand?` (${s.brand}${s.model?' '+s.model:''})`:s.model?` (${s.model})`:'';
+  const loc=s.location?` located in the ${s.location}`:'';
+  const d=new Date();
+  const dateStr=d.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  const templates={
+    service:{
+      subject:`Service Request — ${sysName} at ${homeName}`,
+      body:`Dear ${vendor},\n\nI am writing to request a service appointment for our ${sysName}${brand}${loc} at ${homeAddr}.\n\nWe are experiencing an issue that needs attention and would like to schedule a technician visit at your earliest convenience. Please let me know your available dates and times.\n\nAdditional details:\n- Property: ${homeName} (${homeAddr})\n- System: ${sysName}${brand}${loc}\n${s.serial?'- Serial #: '+s.serial+'\n':''}\nPlease reply to this email or contact me directly to arrange the appointment.\n\nThank you for your assistance.\n\nBest regards,\n${senderName}\n${OWNER_EMAIL}\n\n---\nSent via HomeBase Property Manager`
+    },
+    annual:{
+      subject:`Annual Service Scheduling — ${sysName} at ${homeName}`,
+      body:`Dear ${vendor},\n\nI would like to schedule our annual service and inspection for the ${sysName}${brand}${loc} at ${homeAddr}.\n\nIt's time for the yearly checkup and I'd like to get this on the calendar. Please advise on available dates over the next few weeks.\n\nProperty details:\n- Property: ${homeName} (${homeAddr})\n- System: ${sysName}${brand}${loc}\n${s.serial?'- Serial #: '+s.serial+'\n':''}\nThank you — I look forward to hearing from you.\n\nBest regards,\n${senderName}\n${OWNER_EMAIL}`
+    },
+    emergency:{
+      subject:`URGENT: Emergency Service Needed — ${sysName} at ${homeName}`,
+      body:`Dear ${vendor},\n\nI am contacting you regarding an urgent service need for our ${sysName}${brand}${loc} at ${homeAddr}.\n\nThis is an emergency situation and we require immediate attention. Please contact me as soon as possible to arrange emergency service.\n\nProperty: ${homeName}\nAddress: ${homeAddr}\nSystem: ${sysName}${brand}${loc}\n${s.serial?'Serial #: '+s.serial+'\n':''}\nI can be reached at ${OWNER_EMAIL}. Please respond urgently.\n\nThank you,\n${senderName}\n${OWNER_EMAIL}`
+    },
+    quote:{
+      subject:`Quote Request — ${sysName} Service at ${homeName}`,
+      body:`Dear ${vendor},\n\nI would like to request a quote for service on our ${sysName}${brand}${loc} at ${homeAddr}.\n\nPlease provide pricing for:\n- Standard service/maintenance visit\n- Any recommended repairs or upgrades\n\nProperty details:\n- Property: ${homeName} (${homeAddr})\n- System: ${sysName}${brand}${loc}\n${s.serial?'- Serial #: '+s.serial+'\n':''}\nPlease reply with your pricing and availability.\n\nThank you,\n${senderName}\n${OWNER_EMAIL}`
+    }
+  };
+  return templates[type]||templates.service;
+}
+
+function copyEmail(){
+  const body=document.getElementById('email-body').value;
+  const subj=document.getElementById('email-subject').value;
+  const text=`Subject: ${subj}\n\n${body}`;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=document.getElementById('copy-email-btn');
+    btn.textContent='✅ Copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='📋 Copy to Clipboard';btn.classList.remove('copied');},2000);
+  }).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    toast('Email copied to clipboard!');
+  });
+}
+
+// ═══════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════
+function rSettings(){
+  const el=document.getElementById('content');
+  const isAdmin=session.role==='admin';
+  let usersHtml='';
+  if(isAdmin){
+    usersHtml=`<div class="set-section">
+      <div class="set-title">Family Members</div>
+      <div style="margin-bottom:10px"><button class="btn bp bsm" onclick="addUser()">+ Add Family Member</button></div>
+      <div class="ilist">${db.users.map(u=>`<div class="user-row">
+        <div class="user-avatar-lg" style="background:${u.role==='admin'?'#7c3aed':getAvatarColor(u.name)}">${u.name.substr(0,2).toUpperCase()}</div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px">${esc(u.name)} ${u.id===session.userId?'<span class="you-tag">You</span>':''} ${u.role==='admin'?'<span class="admin-tag">Admin</span>':''}</div>
+          <div style="font-size:12px;color:var(--muted)">Member since ${u.created||'–'}</div>
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          ${u.id!==session.userId?`<button class="btn bs bsm" onclick="resetPwd('${u.id}')">Reset Password</button><button class="btn bs bsm" onclick="toggleAdmin('${u.id}')">${u.role==='admin'?'Remove Admin':'Make Admin'}</button><button class="bico" onclick="delUser('${u.id}')">🗑️</button>`:''}
+        </div>
+      </div>`).join('')}</div>
+    </div>`;
+  }
+  el.innerHTML=`${usersHtml}
+  <div class="set-section">
+    <div class="set-title">Your Account</div>
+    <div class="card" style="margin-bottom:0">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+        <div class="user-avatar-lg" style="width:48px;height:48px;font-size:20px;background:${getAvatarColor(session.name)}">${session.name.substr(0,2).toUpperCase()}</div>
+        <div><div style="font-weight:600;font-size:16px">${esc(session.name)}</div><div style="font-size:12px;color:var(--muted)">${session.role==='admin'?'Administrator':'Family Member'}</div></div>
+      </div>
+      <button class="btn bs" onclick="changePwd('${session.userId}')">🔑 Change My Password</button>
+    </div>
+  </div>
+  <div class="set-section">
+    <div class="set-title">🔗 Server Sync & WhatsApp</div>
+    <div class="card" style="margin-bottom:0" id="sync-card">
+      ${renderSyncCard()}
+    </div>
+  </div>
+  <div class="set-section">
+    <div class="set-title">Data & Backup</div>
+    <div class="card" style="margin-bottom:0">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Export a backup to share with family or restore on another device. The backup includes all data and user accounts (passwords are hashed for security).</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn bp" onclick="exportD()">⬇ Export Backup</button>
+        <button class="btn bs" onclick="importD()">⬆ Import Backup</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Server Sync UI ──
+function renderSyncCard(){
+  const cfg=getSyncCfg();
+  const connected=!!(cfg.url&&cfg.key);
+  return`
+  ${connected
+    ?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:18px">✅</span><div><div style="font-weight:600;font-size:13px">Connected to server</div><div style="font-size:11px;color:var(--muted)">${esc(cfg.url)}</div></div></div>`
+    :`<p style="font-size:13px;color:var(--muted);margin-bottom:12px">Connect to your HomeBase server to enable <strong>WhatsApp</strong> with Geronimo and <strong>daily reminders</strong>.</p>`
+  }
+  <div class="fg"><label>Server URL</label><input class="fc" id="sync-url" placeholder="https://your-app.railway.app" value="${esc(cfg.url||'')}"></div>
+  <div class="fg"><label>API Key</label><input class="fc" id="sync-key" type="password" placeholder="Your API_KEY from the server" value="${esc(cfg.key||'')}"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn bp" onclick="saveSyncCfg()">💾 Save & Test</button>
+    ${connected?`<button class="btn bs" onclick="manualSync()">🔄 Sync Now</button><button class="btn bs" style="color:var(--err)" onclick="clearSyncCfg()">Disconnect</button>`:''}
+  </div>`;
+}
+
+async function saveSyncCfg(){
+  const url=document.getElementById('sync-url').value.trim().replace(/\/$/,'');
+  const key=document.getElementById('sync-key').value.trim();
+  if(!url||!key){alert('Enter both the server URL and API key.');return;}
+  setSyncCfg({url,key});
+  // Test the connection
+  try{
+    const r=await fetch(url+'/api/health');
+    if(!r.ok)throw new Error('Server returned '+r.status);
+    // Push current local data up
+    await syncPush(db);
+    toast('✅ Connected! Your data is now syncing.');
+  }catch(e){
+    toast('⚠️ Saved but could not reach server: '+e.message);
+  }
+  render();
+}
+
+async function manualSync(){
+  toast('Syncing…');
+  const ok=await syncPull();
+  if(ok){updFilter();render();toast('✅ Synced from server!');}
+  else toast('⚠️ Could not reach server');
+}
+
+function clearSyncCfg(){
+  if(!confirm('Disconnect from server? Your local data will stay intact.'))return;
+  localStorage.removeItem('hb_sync');
+  render();toast('Disconnected from server');
+}
+
+function getAvatarColor(name){
+  const cols=['#3b82f6','#10b981','#8b5cf6','#ec4899','#f59e0b','#06b6d4','#ef4444'];
+  let h=0;for(let i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))%cols.length;
+  return cols[Math.abs(h)%cols.length];
+}
+function addUser(){st.mdata={mode:'add',type:'user'};showMod('Add Family Member',`
+  <div class="auth-note">They'll use this name and password to sign in on any device.</div>
+  <div class="fg"><label>Name *</label><input class="fc" id="f-uname" placeholder="e.g. Sarah, Mom, Dad"></div>
+  <div class="fg"><label>Password *</label><input class="fc" id="f-upwd" type="password" placeholder="Min 4 characters"></div>
+  <div class="fg"><label>Confirm Password *</label><input class="fc" id="f-upwd2" type="password" placeholder="Re-enter password"></div>`)}
+function resetPwd(userId){st.mdata={mode:'reset',type:'user',id:userId};const u=db.users.find(x=>x.id===userId);showMod(`Reset Password — ${esc(u.name)}`,`
+  <div class="fg"><label>New Password *</label><input class="fc" id="f-upwd" type="password"></div>
+  <div class="fg"><label>Confirm *</label><input class="fc" id="f-upwd2" type="password"></div>`)}
+function changePwd(userId){st.mdata={mode:'changepwd',type:'user',id:userId};showMod('Change Your Password',`
+  <div class="fg"><label>Current Password *</label><input class="fc" id="f-oldpwd" type="password"></div>
+  <div class="fg"><label>New Password *</label><input class="fc" id="f-upwd" type="password" placeholder="Min 4 characters"></div>
+  <div class="fg"><label>Confirm New Password *</label><input class="fc" id="f-upwd2" type="password"></div>`)}
+function toggleAdmin(userId){
+  const u=db.users.find(x=>x.id===userId);if(!u)return;
+  if(u.role==='admin'&&db.users.filter(x=>x.role==='admin').length<=1){alert('Must have at least one admin.');return;}
+  u.role=u.role==='admin'?'member':'admin';saveDB();render();toast(`${u.name} is now ${u.role==='admin'?'an admin':'a regular member'}`);
+}
+function delUser(userId){
+  const u=db.users.find(x=>x.id===userId);if(!u)return;
+  if(!confirm(`Remove ${u.name} from HomeBase?`))return;
+  db.users=db.users.filter(x=>x.id!==userId);saveDB();render();toast(`${u.name} removed`);
+}
+
+// ═══════════════════════════════════════════
+// MODAL SAVE
+// ═══════════════════════════════════════════
+function showMod(title,body){
+  document.getElementById('mtitle').textContent=title;
+  document.getElementById('mbody').innerHTML=body;
+  const msave=document.getElementById('msave');
+  msave.style.display='';msave.textContent='Save';
+  document.getElementById('moverlay').classList.add('open');
+}
+function hideMod(){document.getElementById('moverlay').classList.remove('open');}
+function closeOvr(e){if(e.target.id==='moverlay')hideMod();}
+function gv(id){const el=document.getElementById(id);return el?el.value.trim():'';}
+
+function saveMod(){
+  const {mode,type,id}=st.mdata;
+  if(type==='user'){
+    if(mode==='add'){
+      const name=gv('f-uname'),pwd=gv('f-upwd'),pwd2=gv('f-upwd2');
+      if(!name){alert('Enter a name.');return;}
+      if(pwd.length<4){alert('Password must be at least 4 characters.');return;}
+      if(pwd!==pwd2){alert('Passwords do not match.');return;}
+      if(db.users.find(u=>u.name.toLowerCase()===name.toLowerCase())){alert('That name is already taken.');return;}
+      hashPwd(pwd).then(hash=>{db.users.push({id:uid(),name,role:'member',hash,created:today()});saveDB();hideMod();render();toast(`${name} added!`);});return;
+    }
+    if(mode==='reset'){
+      const pwd=gv('f-upwd'),pwd2=gv('f-upwd2');
+      if(pwd.length<4||pwd!==pwd2){alert(pwd!==pwd2?'Passwords do not match.':'Min 4 characters.');return;}
+      hashPwd(pwd).then(hash=>{const u=db.users.find(x=>x.id===id);if(u)u.hash=hash;saveDB();hideMod();toast('Password reset!');});return;
+    }
+    if(mode==='changepwd'){
+      const old=gv('f-oldpwd'),np=gv('f-upwd'),np2=gv('f-upwd2');
+      if(!old||np.length<4||np!==np2){alert(np!==np2?'New passwords do not match.':'Fill in all fields.');return;}
+      const u=db.users.find(x=>x.id===id);if(!u)return;
+      hashPwd(old).then(oh=>{
+        if(u.hash!==oh){alert('Current password is incorrect.');return;}
+        hashPwd(np).then(nh=>{u.hash=nh;saveDB();hideMod();toast('Password changed!');});
+      });return;
+    }
+  }
+  if(type==='bill'&&mode==='markpaid'){
+    const b=db.bills.find(x=>x.id===id);if(!b)return;
+    b.lastPaid=gv('f-paiddate')||today();
+    if(gv('f-paidamt'))b.lastAmount=parseFloat(gv('f-paidamt'));
+    if(gv('f-paidnotes'))b.lastNote=gv('f-paidnotes');
+    b.nextDue=nextDue(b.lastPaid,b.frequency);
+    saveDB();hideMod();render();toast('Bill marked as paid ✓');return;
+  }
+  if(type==='home'){
+    const name=gv('f-name');if(!name){alert('Enter a home name.');return;}
+    const obj={name,address:gv('f-address'),color:gv('f-color')||COLORS[0],notes:gv('f-notes')};
+    if(mode==='add'){obj.id=uid();db.homes.push(obj);}else Object.assign(db.homes.find(h=>h.id===id),obj);
+    saveDB();updFilter();render();toast(mode==='add'?'Home added!':'Home updated!');
+  }else if(type==='bill'){
+    const name=gv('f-name'),homeId=gv('f-homeId');
+    if(!name){alert('Enter a bill name.');return;}if(!homeId){alert('Select a home.');return;}
+    const obj={name,homeId,category:gv('f-category'),amount:gv('f-amount')?parseFloat(gv('f-amount')):null,frequency:gv('f-frequency'),nextDue:gv('f-nextDue'),lastPaid:gv('f-lastPaid'),paymentUrl:gv('f-paymentUrl'),accountNum:gv('f-accountNum'),notes:gv('f-notes')};
+    if(mode==='add'){obj.id=uid();db.bills.push(obj);}else Object.assign(db.bills.find(b=>b.id===id),obj);
+    saveDB();render();toast(mode==='add'?'Bill added!':'Bill updated!');
+  }else if(type==='maint'&&mode==='copymaint'){
+    const m=db.maint.find(x=>x.id===id);if(!m){hideMod();return;}
+    const checked=Array.from(document.querySelectorAll('#copy-homes-list input[type=checkbox]:checked')).map(cb=>cb.value);
+    if(!checked.length){alert('Select at least one home.');return;}
+    const resetDates=document.getElementById('copy-reset-dates')?.checked!==false;
+    let added=0;
+    checked.forEach(homeId=>{
+      const copy={...m,id:uid(),homeId};
+      if(resetDates){copy.lastDone='';copy.nextDue=null;}
+      db.maint.push(copy);added++;
+    });
+    saveDB();render();hideMod();toast(`Task copied to ${added} home${added!==1?'s':''}! 📋`);return;
+  }else if(type==='maint'){
+    const name=gv('f-name'),homeId=gv('f-homeId');
+    if(!name){alert('Enter a task name.');return;}if(!homeId){alert('Select a home.');return;}
+    const ld=gv('f-lastDone'),fv=gv('f-frequency');
+    const obj={name,homeId,category:gv('f-category'),frequency:fv,lastDone:ld,nextDue:gv('f-nextDue')||(ld?nextDue(ld,fv):null),notes:gv('f-notes')};
+    if(mode==='add'){obj.id=uid();db.maint.push(obj);}else Object.assign(db.maint.find(m=>m.id===id),obj);
+    saveDB();render();toast(mode==='add'?'Task added!':'Task updated!');
+  }else if(type==='event'){
+    const title=gv('f-title'),homeId=gv('f-homeId'),date=gv('f-date');
+    if(!title){alert('Enter an event title.');return;}if(!homeId){alert('Select a home.');return;}if(!date){alert('Select a date.');return;}
+    const obj={title,homeId,date,notes:gv('f-notes')};
+    if(mode==='add'){obj.id=uid();db.events.push(obj);}else Object.assign(db.events.find(e=>e.id===id),obj);
+    saveDB();render();toast(mode==='add'?'Event added!':'Event updated!');
+  }else if(type==='system'){
+    const name=gv('f-name'),homeId=gv('f-homeId');
+    if(!name){alert('Enter a system name.');return;}if(!homeId){alert('Select a home.');return;}
+    const obj={name,homeId,category:gv('f-category'),location:gv('f-location'),brand:gv('f-brand'),model:gv('f-model'),serial:gv('f-serial'),installed:gv('f-installed'),nextService:gv('f-nextService'),contactName:gv('f-contactName'),contactPhone:gv('f-contactPhone'),notes:gv('f-notes')};
+    if(mode==='add'){obj.id=uid();db.systems.push(obj);}else Object.assign(db.systems.find(s=>s.id===id),obj);
+    saveDB();render();toast(mode==='add'?'System added!':'System updated!');
+  }
+  hideMod();
+}
+
+// ═══════════════════════════════════════════
+// EXPORT / IMPORT
+// ═══════════════════════════════════════════
+function exportD(){
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='homebase-backup-'+today()+'.json';a.click();URL.revokeObjectURL(a.href);toast('Backup exported!');
+}
+function importD(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();r.onload=ev=>{
+      try{const d=JSON.parse(ev.target.result);if(!d.homes)throw new Error();
+        if(!confirm('This will replace ALL current data. Continue?'))return;
+        db=d;saveDB();updFilter();render();toast('Data imported!');
+      }catch{alert('Invalid backup file.');}
+    };r.readAsText(f);
+  };inp.click();
+}
+
+// ═══════════════════════════════════════════
+// GERONIMO CHAT ASSISTANT
+// ═══════════════════════════════════════════
+const GERI_PROMPTS=[
+  'What bills are due this month?',
+  'Any overdue maintenance?',
+  'Give me a full summary',
+  'Draft a service email',
+  'What payments are coming up?',
+];
+
+function geriInit(){
+  const msgs=document.getElementById('geri-msgs');
+  msgs.innerHTML='';
+  geriMsg('geri',`Hi ${session.name}! 👋 I'm Geronimo, your HomeBase assistant. I can check your bills, maintenance tasks, draft emails to service providers, and more. What would you like to know?`);
+  const pp=document.getElementById('geri-prompts');
+  pp.innerHTML=GERI_PROMPTS.map(p=>`<div class="gprompt" onclick="geriAsk('${p.replace(/'/g,"&#39;")}')">${p}</div>`).join('');
+}
+
+function geriToggle(){
+  const panel=document.getElementById('geri-panel');
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open'))document.getElementById('geri-inp').focus();
+}
+
+function geriSend(){
+  const inp=document.getElementById('geri-inp');
+  const q=inp.value.trim();
+  if(!q)return;
+  inp.value='';
+  document.getElementById('geri-prompts').innerHTML='';
+  geriMsg('user',q);
+  geriThink(q);
+}
+
+function geriAsk(q){
+  document.getElementById('geri-prompts').innerHTML='';
+  geriMsg('user',q);
+  geriThink(q);
+}
+
+function geriMsg(who,html){
+  const msgs=document.getElementById('geri-msgs');
+  const div=document.createElement('div');
+  div.className=`gmsg ${who}`;
+  div.innerHTML=who==='geri'?html:esc(html);
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+function geriThink(q){
+  // Show typing indicator
+  const msgs=document.getElementById('geri-msgs');
+  const td=document.createElement('div');
+  td.className='gmsg geri';td.id='geri-typing';
+  td.innerHTML='<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+  msgs.appendChild(td);msgs.scrollTop=msgs.scrollHeight;
+  setTimeout(()=>{
+    const t=document.getElementById('geri-typing');if(t)t.remove();
+    geriRespond(q.toLowerCase(),q);
+  },600);
+}
+
+function geriRespond(q,original){
+  // Bills / payments
+  if(/bill|payment|pay|due|owe|unpaid|overdue|utility|utilities|mortgage|insurance/.test(q)){
+    return geriMsg('geri',geriBills(q));
+  }
+  // Maintenance
+  if(/maint|task|fix|service|repair|hvac|filter|gutter|season|inspection|todo/.test(q)){
+    return geriMsg('geri',geriMaint(q));
+  }
+  // Email draft
+  if(/email|draft|contact|vendor|contractor|plumber|electric|hvac company|service provider|book|appointment/.test(q)){
+    return geriMsg('geri',geriEmailHelp(q));
+  }
+  // Calendar / events
+  if(/event|calendar|schedul|visit|upcoming|week|month/.test(q)){
+    return geriMsg('geri',geriEvents());
+  }
+  // Summary
+  if(/summar|overview|status|update|report|all|everything|what.*(going|happening)/.test(q)){
+    return geriMsg('geri',geriSummary());
+  }
+  // Homes
+  if(/home|house|propert/.test(q)){
+    return geriMsg('geri',geriHomes());
+  }
+  // Help
+  if(/help|what can|how|capable|do for/.test(q)){
+    return geriMsg('geri',geriHelp());
+  }
+  // Fallback
+  geriMsg('geri',`I'm not sure I understood that. Here's what I can help with:<br><br>• <em>"What bills are due?"</em><br>• <em>"Any overdue maintenance?"</em><br>• <em>"Give me a summary"</em><br>• <em>"Draft a service email"</em><br>• <em>"What events are coming up?"</em><br><br>Try one of those, or ask in your own words!`);
+}
+
+function geriBills(q){
+  const overdue=db.bills.filter(b=>ddays(calcNext(b,true))<0&&!paidThisPeriod(b));
+  const soon=db.bills.filter(b=>{const d=ddays(calcNext(b,true));return d>=0&&d<=14&&!paidThisPeriod(b);});
+  const paid=db.bills.filter(b=>paidThisPeriod(b));
+  let r='';
+  if(overdue.length){
+    r+=`<strong>🔴 Overdue (${overdue.length})</strong><br>`;
+    r+=overdue.map(b=>`• ${b.name} — ${ghn(b.homeId)}${b.amount?' ($'+parseFloat(b.amount).toFixed(2)+')':''}${b.paymentUrl?` <a href="${esc(b.paymentUrl)}" target="_blank" style="color:var(--pri)">Pay Now →</a>`:''}`).join('<br>');
+    r+='<br><br>';
+  }
+  if(soon.length){
+    r+=`<strong>🟠 Due in the next 2 weeks (${soon.length})</strong><br>`;
+    r+=soon.map(b=>{const nd=calcNext(b,true);return`• ${b.name} — due ${dshort(nd)} (${ghn(b.homeId)})${b.amount?' — $'+parseFloat(b.amount).toFixed(2):''}${b.paymentUrl?` <a href="${esc(b.paymentUrl)}" target="_blank" style="color:var(--pri)">Pay →</a>`:''}`}).join('<br>');
+    r+='<br><br>';
+  }
+  if(paid.length){
+    r+=`<strong>✅ Paid this period (${paid.length})</strong><br>`;
+    r+=paid.map(b=>`• ${b.name} — ${ghn(b.homeId)}`).join('<br>');
+    r+='<br><br>';
+  }
+  if(!r)r='✅ No bills are overdue or coming up in the next two weeks. You\'re all caught up!';
+  return r.trim();
+}
+
+function geriMaint(q){
+  const overdue=db.maint.filter(m=>ddays(calcNext(m,false))<0);
+  const soon=db.maint.filter(m=>{const d=ddays(calcNext(m,false));return d>=0&&d<=30;});
+  let r='';
+  if(overdue.length){
+    r+=`<strong>🔴 Overdue (${overdue.length})</strong><br>`;
+    r+=overdue.map(m=>`• ${m.name} — ${ghn(m.homeId)} (${m.category})`).join('<br>');
+    r+='<br><br>';
+  }
+  if(soon.length){
+    r+=`<strong>🟡 Due in 30 days (${soon.length})</strong><br>`;
+    r+=soon.map(m=>{const nd=calcNext(m,false);return`• ${m.name} — due ${dshort(nd)} (${ghn(m.homeId)})`}).join('<br>');
+    r+='<br><br>';
+  }
+  if(!r)r='✅ No maintenance tasks are overdue or due in the next 30 days. Everything is on track!';
+  return r.trim();
+}
+
+function geriEmailHelp(q){
+  const contactSystems=db.systems.filter(s=>s.contactName||s.contactPhone);
+  if(!contactSystems.length){
+    return`I'd love to help draft an email, but I don't see any service contacts saved yet. Go to <strong>Systems</strong>, add a system with a contact name, and I can draft emails to them.<br><br>You can also click <strong>📧 Draft Email</strong> on any system that has a contact saved.`;
+  }
+  let r=`Here are the service contacts I can draft emails for:<br><br>`;
+  r+=contactSystems.map((s,i)=>`${i+1}. <strong>${s.name}</strong> — ${ghn(s.homeId)}${s.contactName?' ('+s.contactName+')':''}<br><button class="geri-draft-btn" onclick="hideMod();geriToggle();showEmailDraft('${s.id}')">📧 Draft Email for ${esc(s.name)}</button>`).join('<br><br>');
+  r+='<br><br><em>You can also find "📧 Draft Email" buttons next to each system on the Systems page.</em>';
+  return r;
+}
+
+function geriEvents(){
+  const t=today();
+  const upcoming=db.events.filter(e=>e.date>=t).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,8);
+  if(!upcoming.length)return'📅 No upcoming events scheduled. You can add events on the <strong>Calendar</strong> page.';
+  let r=`<strong>📅 Upcoming Events (${upcoming.length})</strong><br><br>`;
+  r+=upcoming.map(e=>`• <strong>${e.title}</strong> — ${dshort(e.date)}, ${ghn(e.homeId)}${e.notes?' ('+e.notes+')':''}`).join('<br>');
+  return r;
+}
+
+function geriSummary(){
+  const ob=db.bills.filter(b=>ddays(calcNext(b,true))<0&&!paidThisPeriod(b)).length;
+  const db30=db.bills.filter(b=>{const d=ddays(calcNext(b,true));return d>=0&&d<=30&&!paidThisPeriod(b);}).length;
+  const paid=db.bills.filter(b=>paidThisPeriod(b)).length;
+  const om=db.maint.filter(m=>ddays(calcNext(m,false))<0).length;
+  const mm30=db.maint.filter(m=>{const d=ddays(calcNext(m,false));return d>=0&&d<=30;}).length;
+  const t=today();
+  const ev7=db.events.filter(e=>e.date>=t&&ddays(e.date)<=7).length;
+  let r=`<strong>📊 HomeBase Summary for ${session.name}</strong><br><br>`;
+  r+=`🏠 <strong>${db.homes.length} home${db.homes.length!==1?'s':''}</strong>: ${db.homes.map(h=>h.name).join(', ')}<br><br>`;
+  r+=`💳 <strong>Bills:</strong> `;
+  if(ob)r+=`${ob} overdue 🔴, `;
+  r+=`${db30} due in 30 days, ${paid} paid ✅<br><br>`;
+  r+=`🔧 <strong>Maintenance:</strong> `;
+  if(om)r+=`${om} overdue 🔴, `;
+  r+=`${mm30} due in 30 days<br><br>`;
+  r+=`📅 <strong>Events:</strong> ${ev7} in the next 7 days<br><br>`;
+  if(ob||om){
+    r+='⚠️ <strong>Action needed:</strong> ';
+    if(ob)r+=`${ob} overdue bill${ob!==1?'s':''} `;
+    if(om)r+=`${om} overdue task${om!==1?'s':''}`;
+    r+='<br>';
+  }else{
+    r+='✅ Everything looks good — nothing overdue!';
+  }
+  return r;
+}
+
+function geriHomes(){
+  if(!db.homes.length)return'No homes added yet. Go to the <strong>Homes</strong> page to add your first property!';
+  let r=`<strong>🏠 Your Properties</strong><br><br>`;
+  r+=db.homes.map(h=>{
+    const hb=db.bills.filter(b=>b.homeId===h.id);
+    const hm=db.maint.filter(m=>m.homeId===h.id);
+    const ob=hb.filter(b=>ddays(calcNext(b,true))<0&&!paidThisPeriod(b)).length;
+    return`<strong>${h.name}</strong>${h.address?' — '+h.address:''}<br>${hb.length} bill${hb.length!==1?'s':''}, ${hm.length} maintenance task${hm.length!==1?'s':''}${ob?' ('+ob+' overdue 🔴)':''}`;
+  }).join('<br><br>');
+  return r;
+}
+
+function geriHelp(){
+  return`<strong>🤖 Here's what I can do:</strong><br><br>
+  💳 <strong>Bills</strong> — Ask "what bills are due?" or "any overdue payments?"<br><br>
+  🔧 <strong>Maintenance</strong> — Ask "what maintenance is due?" or "any overdue tasks?"<br><br>
+  📊 <strong>Summary</strong> — Ask for "a full summary" or "overview"<br><br>
+  📧 <strong>Email Drafts</strong> — Ask "help me draft a service email" and I'll show you the contacts<br><br>
+  📅 <strong>Events</strong> — Ask "what's coming up?" or "any events this week?"<br><br>
+  🏠 <strong>Homes</strong> — Ask "tell me about my homes"<br><br>
+  <em>Tip: You can also click 📧 Draft Email on any system on the Systems page!</em>`;
+}
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+let _tt;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2600);}
+
+// ═══════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════
+initAuth();
+document.addEventListener('keydown',e=>{if(e.key==='Escape')hideMod();});
+</script>
+</body>
+</html>
