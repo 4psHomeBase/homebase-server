@@ -1,7 +1,7 @@
 {
   "name": "homebase-server",
-  "version": "1.0.0",
-  "description": "HomeBase backend — WhatsApp integration via Twilio",
+  "version": "1.1.0",
+  "description": "HomeBase backend — WhatsApp integration via Twilio + Gmail vendor auto-populate",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -12,7 +12,9 @@
     "twilio": "^4.19.0",
     "node-cron": "^3.0.3",
     "body-parser": "^1.20.2",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "imapflow": "^1.0.160",
+    "mailparser": "^3.6.7"
   },
   "engines": {
     "node": ">=18"
